@@ -174,8 +174,8 @@ if __name__ == "__main__":
     regex_pattern = "a*4.+hi"
 
     regex_compiled = RegexFSM(regex_pattern)
-
-    print(regex_compiled.check_string("aaaaaa4uhi"))  # True
-    print(regex_compiled.check_string("4uhi"))  # True
-    print(regex_compiled.check_string("4hi"))  # False
-    print(regex_compiled.check_string("meow"))  # False
+    print(f'\nСтворений автомат для регулярного виразу "{regex_pattern}"')
+    print(f'Результат для "aaaaaa4uhi": {regex_compiled.check_string("aaaaaa4uhi")}')  # True
+    print(f'Результат для "4uhi": {regex_compiled.check_string("4uhi")}')  # True
+    print(f'Результат для "4hi": {regex_compiled.check_string("4hi")}')  # False
+    print(f'Результат для "meow": {regex_compiled.check_string("meow")}')  # False
