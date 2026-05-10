@@ -171,11 +171,17 @@ class RegexFSM:
 
 
 if __name__ == "__main__":
-    regex_pattern = "a*4.+hi"
+    regex_pattern = input("Введіть регулярний вираз (наприклад, a*4.+hi): ")
 
     regex_compiled = RegexFSM(regex_pattern)
-    print(f'\nСтворений автомат для регулярного виразу "{regex_pattern}"')
-    print(f'Результат для "aaaaaa4uhi": {regex_compiled.check_string("aaaaaa4uhi")}')  # True
-    print(f'Результат для "4uhi": {regex_compiled.check_string("4uhi")}')  # True
-    print(f'Результат для "4hi": {regex_compiled.check_string("4hi")}')  # False
-    print(f'Результат для "meow": {regex_compiled.check_string("meow")}')  # False
+    print("Автомат успішно побудовано!")
+
+    while True:
+        test_string = input("\nВведіть рядок для перевірки (або 'exit' для виходу): ")
+        if test_string.lower() == 'exit':
+            print("Програму завершено.")
+            break
+
+        result = regex_compiled.check_string(test_string)
+
+        print(f"Результат для '{test_string}': {result}")

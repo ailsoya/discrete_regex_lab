@@ -16,3 +16,7 @@
 ## Запуск
 ```bash
 python regex.py
+```
+
+## Результати
+![alt text](image.png)
