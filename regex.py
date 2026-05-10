@@ -26,15 +26,18 @@ class StartState(State):
     next_states: list[State] = []
 
     def __init__(self):
-        super().__init__()
+        self.next_states: list[State] = []
 
     def check_self(self, char):
-        return super().check_self(char)
+        return False
 
 
 class TerminationState(State):
-    pass  # Implement
+    def __init__(self):
+        self.next_states = []
 
+    def check_self(self, char):
+        return char == ""
 
 class DotState(State):
     """
@@ -44,10 +47,10 @@ class DotState(State):
     next_states: list[State] = []
 
     def __init__(self):
-        super().__init__()
+        self.next_states = []
 
     def check_self(self, char: str):
-        pass  # Implement
+        return char != ''
 
 
 class AsciiState(State):
@@ -59,74 +62,112 @@ class AsciiState(State):
     curr_sym = ""
 
     def __init__(self, symbol: str) -> None:
-        pass  # Implement
+        self.curr_sym = symbol
+        self.next_states = []
 
     def check_self(self, curr_char: str) -> State | Exception:
-        pass  # Implement
+        return curr_char == self.curr_sym
 
 
 class StarState(State):
-
     next_states: list[State] = []
 
     def __init__(self, checking_state: State):
-        pass  # Implement
+        self.next_states = []
+        self.checking_state = checking_state
 
     def check_self(self, char):
-        for state in self.next_states:
-            if state.check_self(char):
-                return True
+        return self.checking_state.check_self(char)
 
-        return False
+    def check_next(self, next_char: str) -> State | Exception:
+        for state in reversed(self.next_states):
+            if state.check_self(next_char):
+                return state
+        if self.checking_state.check_self(next_char):
+            return self
+        raise NotImplementedError("rejected string")
 
 
 class PlusState(State):
     next_states: list[State] = []
 
     def __init__(self, checking_state: State):
-        pass  # Implement
+        self.checking_state = checking_state
+        self.next_states = []
 
     def check_self(self, char):
-        pass  # Implement
+        return self.checking_state.check_self(char)
+
+    def check_next(self, next_char: str) -> State | Exception:
+        for state in reversed(self.next_states):
+            if state.check_self(next_char):
+                return state
+        if self.checking_state.check_self(next_char):
+            return self
+        raise NotImplementedError("rejected string")
 
 
 class RegexFSM:
     curr_state: State = StartState()
 
     def __init__(self, regex_expr: str) -> None:
-
-        prev_state = self.curr_state
-        tmp_next_state = self.curr_state
+        self.curr_state = StartState()
+        nodes = [self.curr_state]
 
         for char in regex_expr:
-            tmp_next_state = self.__init_next_state(char, prev_state, tmp_next_state)
-            prev_state.next_states.append(tmp_next_state)
+            last_node = nodes[-1]
+            new_state = self.__init_next_state(char, None, last_node)
+
+            if char in ("*", "+"):
+                parent = nodes[-2]
+                parent.next_states.remove(last_node)
+                parent.next_states.append(new_state)
+
+                nodes[-1] = new_state
+            else:
+                nodes[-1].next_states.append(new_state)
+                if isinstance(nodes[-1], StarState):
+                    nodes[-2].next_states.append(new_state)
+
+                nodes.append(new_state)
+
+        nodes[-1].next_states.append(TerminationState())
+        if isinstance(nodes[-1], StarState):
+            nodes[-2].next_states.append(TerminationState())
 
     def __init_next_state(
-        self, next_token: str, prev_state: State, tmp_next_state: State
-    ) -> State:
-        new_state = None
+            self, next_token: str, prev_state: State,
+            tmp_next_state: State) -> State:
 
+        new_state = None
         match next_token:
             case next_token if next_token == ".":
                 new_state = DotState()
             case next_token if next_token == "*":
                 new_state = StarState(tmp_next_state)
-                # here you have to think, how to do it.
-
             case next_token if next_token == "+":
-                pass  # Implement
-
+                new_state = PlusState(tmp_next_state)
             case next_token if next_token.isascii():
                 new_state = AsciiState(next_token)
-
             case _:
                 raise AttributeError("Character is not supported")
 
         return new_state
 
-    def check_string(self):
-        pass  # Implement
+    def check_string(self: RegexFSM, string: str) -> bool:
+        current_state = self.curr_state
+
+        for char in string:
+            try:
+                current_state = current_state.check_next(char)
+            except NotImplementedError:
+                return False
+
+        try:
+            current_state.check_next("")
+            return True
+        except NotImplementedError:
+            return False
 
 
 if __name__ == "__main__":
@@ -136,4 +177,5 @@ if __name__ == "__main__":
 
     print(regex_compiled.check_string("aaaaaa4uhi"))  # True
     print(regex_compiled.check_string("4uhi"))  # True
+    print(regex_compiled.check_string("4hi"))  # False
     print(regex_compiled.check_string("meow"))  # False
